@@ -1,7 +1,7 @@
 {
   "name": "jsondb",
   "version": "1.0.0",
-  "description": "A lightweight, easy to use , secured, encryptable and practically fast Json based database for nodejs and browser",
+  "description": "A lightweight, easy to use , secured and practically fast Json based database for nodejs and browser",
   "main": "index.js",
   "type": "module",
   "keywords": [
@@ -12,7 +12,8 @@
     "Data"
   ],
   "scripts": {
-    "start_JSONDB": "node example"
+    "start_JSONDB": "node example.js",
+    "start": "nodemon example.js"
   },
   "author": "Friday Candour",
   "license": "MIT"

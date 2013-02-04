@@ -1,8 +1,9 @@
 # JsonDB Database
 
-A lightweight, easy to use, secured access, encryptable and practically fast Json based database for nodejs and the browser.
+A lightweight, easy to use, secured access and practically fast Json based database for nodejs and the browser.
 
 # JsonDB Documentation
+
 
 For JsonDB 1.0.0
 
@@ -256,7 +257,7 @@ const StudentTable = connection.getTable("Student");
 let Student = {
   Student_name: "friday candour",
   age: 121, // years old
-  class: "Senior javascript/typescript developer full stack and mobile",
+  class: "Senior javascript/typescript developer",
   handicap: false,
   classNumber: 1, // this unique remember
 };
@@ -275,7 +276,7 @@ const ExamRecord = {
 
   // this following fake properties will not be added
   // because they are not in the schema even if you put them above those
-  // it works  :)
+  // gives you more flexibility of a proper behaviour
   hello: "am friday candour and i love coding",
   this_fake_properties_will_not_be_added: "hello world",
 };
@@ -361,17 +362,16 @@ copy your keys and save
 
 <img src="keys.png" >
 
-# problems to solve
+# IN THIS VERSION 
 
-- .getWhereAny() needs the fastest algorithm
-- saving with relations works but the cascade option doesn't for now
-- ruminant data encryption > almost done! :)
+- .getWhereAny() has a algorithm
+- saving with relations works but the cascade option has been reomoved
 - support for browser via local storage
 
 # More
 
 - If well pretty JsonDB is under 700 lines of code right now
-- With JsonDB encryption you don't need a bycrypt, jobs done!
+- With JsonDB encryption you don't need a bycrypt, jobs going to be done internally done!
 - It's now super tiny, fast, secured access, encryptale and easy to use database
 
       JSON DB DataBase MIT Licence © 2022

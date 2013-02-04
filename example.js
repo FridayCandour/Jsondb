@@ -3,10 +3,9 @@ import JSONDB, { JSONDBversion } from "./index.js";
 const database = new JSONDB();
 // iniatialises a new JSONDB database instance and created the database file
 database.init({
-  name: "Student_exam_record_data_base",
+  name: "Student_exam_record",
   password: "password",
   username: "jsondb_username",
-  encrypted: false,
 });
 
 const ExamRecordSchema = database.schema({
@@ -57,12 +56,11 @@ const StudentSchema = database.schema({
 });
 
 // writes table schema into your JSONDB instance file
-database.assemble([ExamRecordSchema, StudentSchema]);
+database.assemble(ExamRecordSchema, StudentSchema);
 
 const details = {
   password: "password",
   username: "jsondb_username",
-  keys: "1488-1373-1292-1182-1085-996-885-796-690-598-494-395-296-196-99",
 };
 // a connection needs details for security
 const connection = await database.createJSONDBConnection(details);
@@ -71,13 +69,13 @@ const StudentTable = connection.getTable("Student");
 let Student = {
   Student_name: "friday candour",
   age: 121, // years old
-  class: "Senior javascript typescript developer full stack and mobile",
+  class: "Senior javascript",
   handicap: false,
   classNumber: 1, // this unique remember
 };
 
 const save_Student = await StudentTable.save(Student);
-console.log(save_Student);
+// console.log(save_Student);
 
 const ExamRecordTable = connection.getTable("ExamRecord");
 const ExamRecord = {
@@ -105,11 +103,11 @@ const Exam_record2 = await ExamRecordTable.save(ExamRecord2);
 
 const allExamRecord = await ExamRecordTable.getAll();
 const allStudent = await StudentTable.getAll();
-console.log(allExamRecord, allStudent);
+//console.log(allExamRecord, allStudent);
 // saving with relations in JSONDB
 // note save before adding as a relation
-console.log(save_Student, 99);
-await StudentTable.saveWithRelations(
+//console.log(save_Student);
+const sc = await StudentTable.saveWithRelations(
   ExamRecordTable,
   save_Student,
   Exam_record
@@ -121,4 +119,6 @@ await StudentTable.saveWithRelations(
 );
 
 const get = await ExamRecordTable.getWhereAny({ totalScores: 10 }, 1);
-console.log(get);
+// console.log(get);
+
+console.log(sc);
