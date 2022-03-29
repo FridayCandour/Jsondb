@@ -4,48 +4,61 @@ const database = new JSONDB();
 console.log("JSONDB version " + JSONDBversion);
 // iniatialises a new JSONDB database instance and created the database file
 database.init({
-  name: "JSONDB_example",
+  name: "Student_exam_record_data_base",
   password: "password",
   username: "jsondb_username",
   encrypted: false,
 });
 
-// creating schema (tables) in JSONDB
-const MessageSchema = database.schema({
-  name: "Message",
+const ExamRecordSchema = database.schema({
+  name: "ExamRecord",
   columns: {
-    message: {
-      type: "string",
+    totalScores: {
+      type: "number",
     },
-    time: {
+    examDate: {
       type: "string",
       nullable: true,
+    },
+    totalSubjects: {
+      type: "number",
     },
   },
 });
 
-const PollSchema = database.schema({
-  name: "Poll",
+// creating schema (tables) in JSONDB
+const StudentSchema = database.schema({
+  name: "Student",
   columns: {
-    pollVote: {
+    Student_name: {
+      type: "string",
+    },
+    age: {
       type: "number",
     },
-    time: {
+    class: {
       type: "string",
+    },
+    handicap: {
+      type: "boolean",
       nullable: true,
+    },
+    classNumber: {
+      type: "number",
+      unique: true,
     },
   },
   // adding relations definition
   relations: {
-    Message: {
-      target: MessageSchema,
-      type: "many", // many or one
-      cascade: true,
+    ExamRecord: {
+      target: ExamRecordSchema,
+      type: "many",
     },
   },
 });
+
 // writes table schema into your JSONDB instance file
-database.assemble([PollSchema, MessageSchema]);
+database.assemble([ExamRecordSchema, StudentSchema]);
 
 const details = {
   password: "password",
@@ -56,18 +69,24 @@ const details = {
 const connection = await database.createJSONDBConnection(details);
 
 // creating and adding stuff into JSONDB tables
-const MessageTable = connection.getTable("Message");
-let message = {
-  time: Date(),
-  message: "hello world guys",
+const StudentTable = connection.getTable("Student");
+let Student = {
+  Student_name: "friday candour",
+  age: 121, // years old
+  class: "Senior javascript/typescript developer full stack and mobile",
+  handicap: false,
+  classNumber: 1, // this unique remember
 };
-const save_message = await MessageTable.save(message);
-console.log(save_message);
 
-const PollTable = connection.getTable("Poll");
-let poll = {
-  pollVote: 12,
-  time: Date(),
+const save_Student = await StudentTable.save(Student);
+console.log(save_Student);
+
+const ExamRecordTable = connection.getTable("ExamRecord");
+const ExamRecord = {
+  totalScores: 1000,
+  examDate: Date(), //humm this is nullable yeah
+  totalSubjects: 1000,
+
   // this following fake properties will not be added
   // because they are not in the schema even if you put them above those
   // it works  :)
@@ -76,14 +95,31 @@ let poll = {
   if_i_have_electricity_and_wifi_then: "no problem",
 };
 
-await PollTable.save(poll);
+const Exam_record = await ExamRecordTable.save(ExamRecord);
 
-const allPoll = await PollTable.getAll();
-const allMessage = await MessageTable.getAll();
+const ExamRecord2 = {
+  totalScores: 10,
+  // examDate: Date(), //humm this is nullable yeah
+  totalSubjects: 1000,
+};
 
+const Exam_record2 = await ExamRecordTable.save(ExamRecord2);
+
+const allExamRecord = await ExamRecordTable.getAll();
+const allStudent = await StudentTable.getAll();
+console.log(allExamRecord, allStudent);
 // saving with relations in JSONDB
 // note save before adding as a relation
-await PollTable.saveWithRelations(MessageTable, allPoll[0], allMessage[0]);
+await StudentTable.saveWithRelations(
+  ExamRecordTable,
+  save_Student,
+  Exam_record
+);
+await StudentTable.saveWithRelations(
+  ExamRecordTable,
+  save_Student,
+  Exam_record2
+);
 
-const get = await PollTable.getWhere({ pollVote: 12 }, 20);
-// console.log(get);
+const get = await ExamRecordTable.getWhereAny({ totalScores: 10 }, 1);
+console.log(get);

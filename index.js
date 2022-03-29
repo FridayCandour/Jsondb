@@ -7,6 +7,8 @@
  *
  *     github > www.github.com/FridayCandour
  *
+ *      telegram > @uiedbooker
+ *
  *   JSONDB  @version 1.0.0
  * .
  *
@@ -74,28 +76,31 @@ class JSONDBTableWrapper {
     function cb(err) {
       if (err) {
         throw new Error(
-          "JSONDB: error failed to update entities into database because " + err
+          "JSONDB: error failed to update entities in database because " + err
         );
       }
     }
     fs.writeFile(name + ".json", JSON.stringify(value), cb);
   }
-  validator(incoming) {
+  validator(incoming, tables) {
+    // works for type, nulllable and unique validations.
     const outgoing = {};
     for (const prop in this.self.columns) {
       if (
-        !this.self.columns.nullable &&
+        this.self.columns[prop].nullable !== true &&
         !Object.hasOwnProperty.call(incoming, prop)
       ) {
         throw new Error(
           "JSONDB: error failed to validate incoming data because " +
             prop +
-            " is not valid for " +
-            this.self.name
+            " is required for " +
+            this.self.name +
+            " Schema"
         );
       }
+
       if (
-        !this.self.columns.nullable &&
+        !this.self.columns[prop].nullable &&
         typeof incoming[prop] !== this.self.columns[prop].type
       ) {
         throw new Error(
@@ -112,6 +117,22 @@ class JSONDBTableWrapper {
             " type instead"
         );
       }
+
+      if (this.self.columns[prop].unique === true) {
+        for (let i = 0; i < tables.length; i++) {
+          const element = tables[i];
+          if (element[prop] === incoming[prop]) {
+            throw new Error(
+              "JSONDB: error failed to validate incoming data because " +
+                prop +
+                " is unique for " +
+                this.self.name +
+                " Schema can't have more than one instance"
+            );
+          }
+        }
+      }
+
       // cleaning time
       outgoing[prop] = incoming[prop];
     }
@@ -132,9 +153,9 @@ await PollTable.saveWithRelations(MessageTable, Poll, allMessages);
       return;
     }
     const db = await this.get(this.self.base_name);
-    //
+    db.last_access_time = Date();
     if (typeof incoming.index !== "number") {
-      incoming = this.validator(incoming);
+      incoming = this.validator(incoming, db.tables[this.self.name]);
       if (this.self.relations && !incoming.relations) {
         incoming.relations = {};
       }
@@ -213,8 +234,9 @@ await PollTable.saveWithRelations(MessageTable, Poll, allMessages);
     //   (a, b) => a.index - b.index
     // );
     const db = await this.get(this.self.base_name);
+    db.last_access_time = Date();
     if (typeof incoming.index !== "number") {
-      incoming = this.validator(incoming);
+      incoming = this.validator(incoming, db.tables[this.self.name]);
       if (this.self.relations && !incoming.relations) {
         incoming.relations = {};
       }
@@ -236,6 +258,7 @@ await PollTable.saveWithRelations(MessageTable, Poll, allMessages);
 */
   async remove(entity) {
     const db = await this.get(this.self.base_name);
+    db.last_access_time = Date();
     // db.tables[this.self.name].splice(entity.index, 1);
     db.tables[this.self.name][entity.index] = null;
     await this.put(this.self.base_name, db);
@@ -249,6 +272,7 @@ await PollTable.saveWithRelations(MessageTable, Poll, allMessages);
 */
   async count() {
     const db = await this.get(this.self.base_name);
+    db.last_access_time = Date();
     return db.tables[this.self.name].length;
   }
   /**
@@ -260,18 +284,21 @@ await PollTable.saveWithRelations(MessageTable, Poll, allMessages);
 */
   async getAll() {
     const db = await this.get(this.self.base_name);
+    db.last_access_time = Date();
     return db.tables[this.self.name];
   }
   /**
- * Save table into a Jsondb instance
+ * get entities with any of the values specifiled from a Jsondb instance
  * -----------------------------
- * @type .getWhere({prop: value, num})=> Promise(object) 
+ * @type .getWhereAny({prop: value}, number | undefind)=> Promise(object) 
  * @example
- await PollTable.getWhere(poll)
+ await PollTable.getWhereAny({name: "friday", age: 121, class: "senior"}) // gets all
+ await PollTable.getWhereAny({email: "fridaymaxtour@gmail.com"}, 2) // gets 2 if they are up to two
 */
-  async getWhere(props, number) {
+  async getWhereAny(props, number) {
     const results = [];
     const db = await this.get(this.self.base_name);
+    db.last_access_time = Date();
     const all = db.tables[this.self.name];
     for (let i = 0; i < all.length; i++) {
       const element = all[i];
@@ -281,6 +308,32 @@ await PollTable.saveWithRelations(MessageTable, Poll, allMessages);
           if (typeof number === "number" && results.length === number) {
             return results;
           }
+        }
+      }
+    }
+    return results;
+  }
+
+  /**
+ * get an entity with the values specifiled from a Jsondb instance
+ * -----------------------------
+ * @type .getOne({prop: value})=> Promise(object) 
+ * @example
+  
+  await PollTable.getOne({email: "fridaymaxtour@gamail.com"}) // gets one
+
+  */
+  async getOne(props) {
+    const results = null;
+    const db = await this.get(this.self.base_name);
+    db.last_access_time = Date();
+    const all = db.tables[this.self.name];
+    for (let i = 0; i < all.length; i++) {
+      const element = all[i];
+      for (const [k, v] of Object.entries(props)) {
+        if (element[k] && element[k] === v) {
+          results = element;
+          break;
         }
       }
     }
@@ -325,6 +378,8 @@ const MessageTable = connection.getTable("Message");
  *     email > fridaymaxtour@gmail.com
  *
  *     github > www.github.com/FridayCandour
+ *
+ *     telegram > @uiedbooker
  *
  *   JSONDB  @version 1.0.0
  *
@@ -386,7 +441,7 @@ class JSONDB {
  *
  * columns @type object  {
  *
- * type >  @type any of  number > string > bolean > blob and must be specified
+ * type >  @type any of  number > string > boolean > blob and must be specified
  *
  * nullable @type bolean true > false default false
  *
@@ -400,7 +455,7 @@ class JSONDB {
  *
  *  attachment_name: @type string,
  *
- * type : @type string should be any of "many-to-one" , "many-to-many" , "one-to-many" , "one-to-one"
+ * type : @type string should be "many" or "one"
  *
  *  }
  *
@@ -539,14 +594,14 @@ const connection = await database.createJSONDBConnection(details);
     }
   }
   validateColumns(columns) {
-    const types = ["number", "string", "bolean", "blob"];
+    const types = ["number", "string", "boolean", "blob"];
     for (const [column, value] of Object.entries(columns)) {
       if (column) {
         if (!types.includes(value.type)) {
           throw new Error(
             "JSONDB: wrong data type given " +
               value.type +
-              "  only number, string, bolean and blob are accepted"
+              "  only number, string, boolean and blob are accepted"
           );
         }
         if (value.unique && typeof value.unique !== "boolean") {

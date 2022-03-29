@@ -1,0 +1,84 @@
+{
+  "DB_NAME": "Student_exam_record_data_base",
+  "username": "jsondb_username",
+  "password": "password",
+  "secrets": [],
+  "encrypted": false,
+  "initialised": true,
+  "time_created": "Mon Mar 28 2022 23:21:47 GMT+0100 (West Africa Standard Time)",
+  "version": "1.0.0",
+  "last_access_time": "Mon Mar 28 2022 23:21:47 GMT+0100 (West Africa Standard Time)",
+  "Entities": {
+    "ExamRecord": {
+      "base_name": "Student_exam_record_data_base",
+      "name": "ExamRecord",
+      "last_index": 1,
+      "columns": {
+        "totalScores": { "type": "number" },
+        "examDate": { "type": "string", "nullable": true },
+        "totalSubjects": { "type": "number" }
+      },
+      "relations": null
+    },
+    "Student": {
+      "base_name": "Student_exam_record_data_base",
+      "name": "Student",
+      "last_index": 0,
+      "columns": {
+        "Student_name": { "type": "string" },
+        "age": { "type": "number" },
+        "class": { "type": "string" },
+        "handicap": { "type": "boolean", "nullable": true },
+        "classNumber": { "type": "number", "unique": true }
+      },
+      "relations": {
+        "ExamRecord": {
+          "target": {
+            "base_name": "Student_exam_record_data_base",
+            "name": "ExamRecord",
+            "last_index": -1,
+            "columns": {
+              "totalScores": { "type": "number" },
+              "examDate": { "type": "string", "nullable": true },
+              "totalSubjects": { "type": "number" }
+            },
+            "relations": null
+          },
+          "type": "many"
+        }
+      }
+    }
+  },
+  "tables": {
+    "ExamRecord": [
+      {
+        "totalScores": 1000,
+        "examDate": "Mon Mar 28 2022 23:21:47 GMT+0100 (West Africa Standard Time)",
+        "totalSubjects": 1000,
+        "index": 0
+      },
+      { "totalScores": 10, "totalSubjects": 1000, "index": 1 }
+    ],
+    "Student": [
+      {
+        "Student_name": "friday candour",
+        "age": 121,
+        "class": "Senior javascript/typescript developer full stack and mobile",
+        "handicap": false,
+        "classNumber": 1,
+        "relations": {
+          "ExamRecord": [
+            {
+              "totalScores": 1000,
+              "examDate": "Mon Mar 28 2022 23:21:47 GMT+0100 (West Africa Standard Time)",
+              "totalSubjects": 1000,
+              "index": 0
+            },
+            { "totalScores": 10, "totalSubjects": 1000, "index": 1 }
+          ]
+        },
+        "index": 0
+      }
+    ]
+  }
+}
