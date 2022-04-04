@@ -1,7 +1,6 @@
 import JSONDB, { JSONDBversion } from "./index.js";
 // creating a new JSONDB object
 const database = new JSONDB();
-console.log("JSONDB version " + JSONDBversion);
 // iniatialises a new JSONDB database instance and created the database file
 database.init({
   name: "Student_exam_record_data_base",
@@ -63,6 +62,7 @@ database.assemble([ExamRecordSchema, StudentSchema]);
 const details = {
   password: "password",
   username: "jsondb_username",
+  keys: "1138-1205-1080-1060-1066-878-806-693-666-491-446-384-250-156-96",
 };
 
 // a connection needs details for security
@@ -110,6 +110,7 @@ const allStudent = await StudentTable.getAll();
 console.log(allExamRecord, allStudent);
 // saving with relations in JSONDB
 // note save before adding as a relation
+console.log(save_Student, 99);
 await StudentTable.saveWithRelations(
   ExamRecordTable,
   save_Student,

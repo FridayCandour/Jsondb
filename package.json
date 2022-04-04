@@ -11,6 +11,9 @@
     "storage",
     "Data"
   ],
+  "scripts": {
+    "start_JSONDB": "node example"
+  },
   "author": "Friday Candour",
   "license": "MIT"
 }
