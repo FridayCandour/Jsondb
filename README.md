@@ -1,11 +1,6 @@
 # JsonDB Database
 
-A lightweight, easy to use, secured, encryptable and practically fast Json based database for nodejs and the browser.
-
-not yet that scalable for very big apps
-use at your risk!
-
-if for educational purposes please Enjoy :)
+A lightweight, easy to use, secured access, encryptable and practically fast Json based database for nodejs and the browser.
 
 # JsonDB Documentation
 
@@ -153,24 +148,36 @@ database.assemble([ExamRecordSchema, StudentSchema]);
 
 ---
 
+JsonDB uses comprehensive verbs, making understanding the function of each JsonDB query clear
+
+here's are the inbuilt querries for JsonDB, custom querries are not supported for now
+
 ```js
 // creating and adding stuff into JSONDB tables
-const table = connection.getTable("table name");
+const table = connection.getTable("< the table name>");
 
-table.save(newobject);
-table.count(); // return the number of elements in the table
-table.getAll(); // return an all of all the elements in the table
-table.getOne(props); // get one element from the table with the given props object values
-table.remove(element); // remove the element from the table indexing is still preserved don't worry
-table.getWhereAny(props, number_or_nothing); // gets all or the give number of element with any of the given props value
+table.save(newobject); // save your element to it's table in JsonDB
 table.saveWithRelations(relatedElementTable, MainElement, relatedElement); // save relationship to Main Element
 
+table.count(); // return the number of elements in the table
+table.getOne(props); // get one element from the table with the given props object values
+table.getAll(); // return an all of all the elements in the table
+table.getWhereAny(props, number_or_nothing); // gets all or the give number of element with any of the given props value
+table.getWhereAnyPropsIncludes(props, number_or_nothing); // get entities with the given prop of type "string" where the values specifiled is included
+table.remove(element); // remove the element from the table indexing is still preserved don't worry
 // more on the way like
 // getWhere(), assert(), verify()
 ```
 
+# Tutorial - Building a student database system
+
+---
+
+In this example we are building a simple unencrypted database for students for exam records
+
+the comments below will take through it.
+
 ```js
-// @examples
 // study this minimal example for student record
 
 import JSONDB, { JSONDBversion } from "./index.js";
@@ -241,7 +248,7 @@ const details = {
   username: "jsondb_username",
 };
 
-// a connection needs details for security
+// a connection needs details for secured access security feature
 const connection = await database.createJSONDBConnection(details);
 
 // creating and adding stuff into JSONDB tables
@@ -260,22 +267,24 @@ console.log(save_Student);
 const ExamRecordTable = connection.getTable("ExamRecord");
 const ExamRecord = {
   totalScores: 1000,
+
   //  examDate: Date(), //humm this is nullable yeah
+  // nullable means it can be empty without any value
+
   totalSubjects: 1000,
 
   // this following fake properties will not be added
   // because they are not in the schema even if you put them above those
   // it works  :)
-  this_fake_properties_will_not_be_added: "fake",
-  hello: "am hungry but i love coding",
-  if_i_have_electricity_and_wifi_then: "no problem",
+  hello: "am friday candour and i love coding",
+  this_fake_properties_will_not_be_added: "hello world",
 };
 
 const Exam_record = await ExamRecordTable.save(ExamRecord);
 
 const ExamRecord2 = {
   totalScores: 10,
-  examDate: Date(), //humm this is nullable yeah
+  examDate: Date(), // was given this time
   totalSubjects: 1000,
 };
 
@@ -286,7 +295,7 @@ const allStudent = await StudentTable.getAll();
 console.log(allExamRecord, allStudent);
 
 // saving with relations in JSONDB
-// note save before adding as a relation
+// note save before saving with a relation
 await StudentTable.saveWithRelations(
   ExamRecordTable,
   save_Student,
@@ -302,20 +311,68 @@ const get = await ExamRecordTable.getWhereAny({ totalScores: 10 }, 1);
 console.log(get);
 ```
 
+# Project update
+
+### Database encryption in beta mode
+
+- in encryption mode JsonDB knows if you are the admin by testing your keys
+
+- encryption has an impressive algorimth but is in beta mode please avoid using till the next update
+
+- Data encryption in progress
+
+#### usage
+
+```js
+// @examples
+// study this minimal example for student record
+
+import JSONDB from "./index.js";
+// creating your new JSONDB object
+const database = new JSONDB();
+
+// iniatialises your new JSONDB database instance which creates your database encryptable file
+database.init({
+  name: "Student_exam_record_data_base",
+  password: "password",
+  username: "jsondb_username",
+  encrypted: true, // the journey begins
+});
+// have a look at your terminal,
+// in production make sure logging is enable on your server
+// copy your keys and clear your terminal
+
+// It's needed only during connection to the JsonDB instance
+
+const details = {
+  password: "password",
+  username: "jsondb_username",
+  // use DotEnv to store it, it's not recommended you input it like this
+  keys: "1450-1368-1103-951-1036-998-745-671-633-472-435-382-275-172-91",
+};
+
+// a connection needs details for security
+const connection = await database.createJSONDBConnection(details);
+```
+
+##### This is what you should see.
+
+copy your keys and save
+
+<img src="keys.png" >
+
 # problems to solve
 
-- If well pretty JsonDB is under 400 lines of code right now
-
-- it's super tiny, fast, secured access, easy to use database
-
-- Most of the problems here are paused becaused am building a fastest algorithm
-  for managing data trees for JsonDB database.
-
 - .getWhereAny() needs the fastest algorithm
-- saving with relations works but cascade doesn't for now
-- ruminant data encryption
+- saving with relations works but the cascade option doesn't for now
+- ruminant data encryption > almost done! :)
 - support for browser via local storage
-- you should try using Deno for more stability
+
+# More
+
+- If well pretty JsonDB is under 700 lines of code right now
+- With JsonDB encryption you don't need a bycrypt, jobs done!
+- It's now super tiny, fast, secured access, encryptale and easy to use database
 
       JSON DB DataBase MIT Licence © 2022
       ------------------------------------
@@ -329,3 +386,7 @@ console.log(get);
       Love creativity? hook me up.
 
       JSONDB @version 1.0.0
+
+```
+
+```

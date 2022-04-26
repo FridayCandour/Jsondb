@@ -1,0 +1,53 @@
+{
+  "DB_NAME": "Student_exam_record_data_base",
+  "username": "jsondb_username",
+  "encrypted": true,
+  "initialised": true,
+  "time_created": "Sat Apr 16 2022 12:04:00 GMT+0100 (West Africa Standard Time)",
+  "version": "1.0.0",
+  "last_access_time": "",
+  "visuality": "NDUw-MTA2Ng==-NzQ5-OTM1-NzYz-NjY2-Nzky",
+  "Entities": {
+    "ExamRecord": {
+      "base_name": "Student_exam_record_data_base",
+      "name": "ExamRecord",
+      "last_index": -1,
+      "columns": {
+        "totalScores": { "type": "number" },
+        "examDate": { "type": "string", "nullable": true },
+        "totalSubjects": { "type": "number" }
+      },
+      "relations": null
+    },
+    "Student": {
+      "base_name": "Student_exam_record_data_base",
+      "name": "Student",
+      "last_index": -1,
+      "columns": {
+        "Student_name": { "type": "string" },
+        "age": { "type": "number" },
+        "class": { "type": "string" },
+        "handicap": { "type": "boolean", "nullable": true },
+        "classNumber": { "type": "number" }
+      },
+      "relations": {
+        "ExamRecord": {
+          "target": {
+            "base_name": "Student_exam_record_data_base",
+            "name": "ExamRecord",
+            "last_index": -1,
+            "columns": {
+              "totalScores": { "type": "number" },
+              "examDate": { "type": "string", "nullable": true },
+              "totalSubjects": { "type": "number" }
+            },
+            "relations": null
+          },
+          "type": "many"
+        }
+      }
+    }
+  },
+  "tables": { "ExamRecord": [], "Student": [] },
+  "password": "password"
+}

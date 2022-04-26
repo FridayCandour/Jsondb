@@ -18,46 +18,19 @@
  *  */
 
 export const JSONDBversion = "1.0.0";
-
-import fs from "fs";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import crypto from "crypto";
-const _dirname = dirname(fileURLToPath(import.meta.url));
-
-/**
- * a custom made uuid For JSONDB
- * ******************************
- */
-
-function uuid(num) {
-  crypto.getRandomValues = (arr) => crypto.randomBytes(arr.length);
-  const btoa = (text) => {
-    return Buffer.from(text, "binary").toString("base64");
-  };
-  function generateUID(length) {
-    length = Math.round(length) || 10;
-    return btoa(
-      Array.from(crypto.getRandomValues(new Uint8Array(length)))
-        .map((b) => String.fromCharCode(b))
-        .join("")
-    )
-      .replace(/[+/]/g, "")
-      .substring(0, length);
-  }
-
-  function dec2hex(dec) {
-    return dec.toString(16).padStart(2, "0");
-  }
-  function generateId(len) {
-    len = Math.round(len);
-    return Array.from(
-      crypto.getRandomValues(new Uint8Array(len || 10)),
-      dec2hex
-    ).join("");
-  }
-
-  return generateUID(num / 2) + generateId(num / 2);
+let fs,
+  fileURLToPath,
+  isNode = false,
+  _dirname;
+if (!globalThis.localStorage) {
+  isNode = true;
+  fs = await import("fs");
+  const dr = await import("path");
+  const fp = await import("url");
+  fileURLToPath = fp.fileURLToPath;
+  _dirname = dr
+    .dirname(fileURLToPath(import.meta.url))
+    .split("node_modules")[0];
 }
 
 const schema = class {
@@ -69,7 +42,19 @@ const schema = class {
       );
     }
     validators.validateColumns(schema_configuration_object.columns);
-    if (schema_configuration_object.relations) {
+
+    const isEmptyObject = function (obj) {
+      // for checking for empty objects
+      for (const name in obj) {
+        return false;
+      }
+      return true;
+    };
+
+    if (
+      schema_configuration_object.relations &&
+      !isEmptyObject(schema_configuration_object.relations)
+    ) {
       validators.validateRelations(schema_configuration_object.relations);
     }
     // assignment
@@ -215,7 +200,7 @@ const secure = function (keys) {
     const clamp = (min, max, value) => Math.min(max, Math.max(min, value));
     const ff = {};
     for (const k in data) {
-      if (k === "index" || k === "relations") {
+      if (k === "index" || k === "relations" || typeof data[k] !== "string") {
         continue;
       }
       let arr = [...(data[k] + "")];
@@ -227,7 +212,7 @@ const secure = function (keys) {
         while (i > -1) {
           // this is the evil part
           // it's not easy to attack such program
-          data[k][i] = chars[clamp(0, 8, Math.round(Math.random() * 8))];
+          data[k][i] = chars[clamp(0, 9, Math.round(Math.random() * 9))];
           arr[i] = null;
           i = arr.indexOf(char);
         }
@@ -238,7 +223,7 @@ const secure = function (keys) {
       ff.index = data["index"];
     }
     if (data.relations) {
-      ff.index = data["relations"];
+      ff.relations = data["relations"];
     }
     // console.log(ff);
     return ff;
@@ -248,7 +233,6 @@ const secure = function (keys) {
     try {
       const _et = getCharsSet(keys);
       let arr = ffff.split("-");
-
       let data = [];
       for (let i = 0; i < arr.length; i++) {
         for (const [char, chars] of Object.entries(_et)) {
@@ -260,8 +244,8 @@ const secure = function (keys) {
           }
         }
       }
-      console.log(data.join(""));
-      if (data.join("").includes("Can")) {
+      // console.log(data.join("") + " checking keys!");
+      if (data.join("").includes("Candour")) {
         return true;
       }
     } catch (error) {}
@@ -274,7 +258,11 @@ const secure = function (keys) {
     if (Array.isArray(data)) {
       for (let z = 0; z < data.length; z++) {
         for (const k in data[z]) {
-          if (k === "index") {
+          if (
+            k === "index" ||
+            k === "relations" ||
+            typeof data[k] !== "string"
+          ) {
             continue;
           }
           let arr = data[z][k].split("-");
@@ -287,6 +275,16 @@ const secure = function (keys) {
                 chars[p] = null;
                 p = chars.indexOf(arr[i]);
               }
+
+              if (data[z][k] * 1 !== NaN) {
+                data[z][k] *= 1;
+              }
+              if (data[z][k] === "false") {
+                data[z][k] = false;
+              }
+              if (data[z][k] === "true") {
+                data[z][k] = true;
+              }
             }
           }
           ff[k] = data[z][k].join("");
@@ -294,12 +292,15 @@ const secure = function (keys) {
         if (data[z].index) {
           ff.index = data[z]["index"];
         }
+        if (data[z].relations) {
+          ff.relations = data[z]["relations"];
+        }
         // console.log(ff);
         return ff;
       }
     } else {
       for (const k in data) {
-        if (k === "index") {
+        if (k === "index" || k === "relations" || typeof data[k] !== "string") {
           continue;
         }
         let arr = data[k].split("-");
@@ -312,12 +313,24 @@ const secure = function (keys) {
               chars[p] = null;
               p = chars.indexOf(arr[i]);
             }
+            if (data[k] * 1 !== NaN) {
+              data[k] *= 1;
+            }
+            if (data[k] === "false") {
+              data[k] = false;
+            }
+            if (data[k] === "true") {
+              data[k] = true;
+            }
           }
         }
         ff[k] = data[k].join("");
       }
       if (data.index) {
         ff.index = data["index"];
+      }
+      if (data.relations) {
+        ff.relations = data["relations"];
       }
       // console.log(ff);
       return ff;
@@ -326,17 +339,12 @@ const secure = function (keys) {
   return { encrypt, decrypt, check };
 };
 
-/**secure(
-  "1149-1294-1237-1040-945-916-805-720-668-475-447-326-238-200-95"
-).encrypt({ name: "Candour is a king", number: 12344, index: 123 });
-secure(
-  "1149-1294-1237-1040-945-916-805-720-668-475-447-326-238-200-95"
-).decrypt({
-  name: "NDAz-OTE3-Njc2-ODcw-Njg2-NjQ0-NzE1-OTA2-NzYy-NjIw-OTA1-OTE4-OTA4-Nzc5-NzYy-Njc0-ODk5",
-  number: "MTExMQ==-MTEyNA==-MTEzNg==-MTE0MQ==-MTE0Mw==",
-  index: 123,
-});
-*/
+// const store = async (name, value) => {
+//   localStorage.setItem(name, JSON.stringify(value));
+// };
+// const retrieve = async (name) => {
+//   localStorage.getItem(name);
+// };
 
 class JSONDBTableWrapper {
   constructor(self, keys) {
@@ -348,29 +356,40 @@ class JSONDBTableWrapper {
           );
         }
       }
-      fs.writeFile(name + ".json", JSON.stringify(value), cb);
+      if (isNode) {
+        fs.writeFile(name + ".json", JSON.stringify(value), cb);
+      } else {
+        localStorage.setItem(name, JSON.stringify(value));
+      }
     };
     this.get = async (name) => {
       return new Promise(function (res, rej) {
-        fs.readFile(
-          _dirname + "/" + name + ".json",
-          { encoding: "utf-8" },
-          function (err, data) {
-            if (err) {
-              return rej(
-                "JSONDB: error failed to retrieve entities from database because " +
-                  err
-              );
-            }
-            try {
-              res(JSON.parse(data));
-            } catch (error) {
-              try {
-                res(JSON.parse(fs.readFileSync(name + ".json", "utf-8")));
-              } catch (error) {}
-            }
+        try {
+          if (!isNode) {
+            res(JSON.parse(localStorage.getItem(name)));
+            return;
           }
-        );
+
+          fs.readFile(
+            _dirname + "/" + name + ".json",
+            { encoding: "utf-8" },
+            function (err, data) {
+              if (err) {
+                return rej(
+                  "JSONDB: error failed to retrieve entities from database because " +
+                    err
+                );
+              }
+              try {
+                res(JSON.parse(data));
+              } catch (error) {
+                try {
+                  res(JSON.parse(fs.readFileSync(name + ".json", "utf-8")));
+                } catch (error) {}
+              }
+            }
+          );
+        } catch (error) {}
       });
     };
     this.validator = (incoming, tables) => {
@@ -449,7 +468,7 @@ await PollTable.saveWithRelations(MessageTable, Poll, allMessages);
     }
     const db = await this.get(this.self.base_name);
     db.last_access_time = Date();
-    if (incoming && !incoming["index"]) {
+    if (incoming && typeof incoming.index !== "number") {
       throw new Error("JsonDB: save before saving with relations");
     }
 
@@ -521,26 +540,31 @@ await PollTable.saveWithRelations(MessageTable, Poll, allMessages);
     // db.tables[this.self.name] = db.tables[this.self.name].sort(
     //   (a, b) => a.index - b.index
     // );
-
     const db = await this.get(this.self.base_name);
     db.last_access_time = Date();
-    if (db.encrypted) {
-      incoming = secure(this.keys).encrypt(incoming);
-    }
     if (typeof incoming.index !== "number") {
       incoming = this.validator(incoming, db.tables[this.self.name]);
       if (this.self.relations && !incoming.relations) {
         incoming.relations = {};
       }
-      incoming.index = db.Entities[this.self.name].last_index + 1;
+      if (db.encrypted) {
+        incoming = secure(this.keys).encrypt(incoming);
+      }
       db.Entities[this.self.name].last_index += 1;
+      incoming.index = db.Entities[this.self.name].last_index;
       db.tables[this.self.name].push(incoming);
     } else {
+      if (db.encrypted) {
+        incoming = secure(this.keys).encrypt(incoming);
+      }
       db.tables[this.self.name][incoming.index] = incoming;
     }
     await this.put(this.self.base_name, db);
-
-    return db.tables[this.self.name][incoming.index];
+    if (db.encrypted) {
+      incoming = secure(this.keys).decrypt(incoming);
+      return incoming;
+    }
+    return incoming;
   }
   /**
  * Save table into a Jsondb instance
@@ -596,19 +620,55 @@ await PollTable.saveWithRelations(MessageTable, Poll, allMessages);
 */
   async getWhereAny(props, number) {
     const results = [];
+    let all;
     const db = await this.get(this.self.base_name);
     db.last_access_time = Date();
     if (db.encrypted) {
-      const all = secure(this.keys).decrypt(db.tables[this.self.name]);
+      all = secure(this.keys).decrypt(db.tables[this.self.name]);
     } else {
-      const all = db.tables[this.self.name];
+      all = db.tables[this.self.name];
     }
 
-    const all = db.tables[this.self.name];
     for (let i = 0; i < all.length; i++) {
       const element = all[i];
       for (const [k, v] of Object.entries(props)) {
         if (element[k] && element[k] === v) {
+          results.push(element);
+          if (typeof number === "number" && results.length === number) {
+            return results;
+          }
+        }
+      }
+    }
+    return results;
+  }
+
+  /**
+ * get entities with the given prop of type "string" where the values specifiled is included
+ * -----------------------------
+ * @type .getWhereAnyPropsIncludes({prop: value}, number | undefind)=> Promise(object) 
+ * 
+ * @example prop must be type string!
+ * 
+ await PollTable.getWhereAnyPropsIncludes({name: "fri"}) // gets all
+ await PollTable.getWhereAnyPropsIncludes({name: "fri"}, 2) // gets 2 if they are up to two
+*/
+  async getWhereAnyPropsIncludes(props, number) {
+    const results = [];
+    let all;
+    const db = await this.get(this.self.base_name);
+    db.last_access_time = Date();
+    if (db.encrypted) {
+      all = secure(this.keys).decrypt(db.tables[this.self.name]);
+    } else {
+      all = db.tables[this.self.name];
+    }
+
+    all = db.tables[this.self.name];
+    for (let i = 0; i < all.length; i++) {
+      const element = all[i];
+      for (const [k, v] of Object.entries(props)) {
+        if (element[k] && typeof v === "string" && element[k].includes(v)) {
           results.push(element);
           if (typeof number === "number" && results.length === number) {
             return results;
@@ -722,22 +782,29 @@ class JSONDB {
   }
   async getDB(name) {
     return new Promise(function (res, rej) {
-      fs.readFile(
-        _dirname + "/" + name + ".json",
-        { encoding: "utf-8" },
-        function (err, data) {
-          if (err) {
-            return rej(err);
-          }
-          try {
-            res(JSON.parse(data));
-          } catch (error) {
+      if (!isNode) {
+        res(JSON.parse(localStorage.getItem(name)));
+        return;
+      }
+
+      try {
+        fs.readFile(
+          _dirname + "/" + name + ".json",
+          { encoding: "utf-8" },
+          function (err, data) {
+            if (err) {
+              return rej(err);
+            }
             try {
-              res(JSON.parse(fs.readFileSync(name + ".json", "utf-8")));
-            } catch (error) {}
+              res(JSON.parse(data));
+            } catch (error) {
+              try {
+                res(JSON.parse(fs.readFileSync(name + ".json", "utf-8")));
+              } catch (error) {}
+            }
           }
-        }
-      );
+        );
+      } catch (error) {}
     });
   }
 
@@ -826,6 +893,7 @@ class JSONDB {
    * Database.init(config)  
    * */
   init(config) {
+    console.log(`\x1B[32m JSONDB version ${JSONDBversion} \x1B[39m`);
     this.initialised = true;
     this.DB_NAME = config.name;
     this.password = config.password || "";
@@ -834,12 +902,16 @@ class JSONDB {
     this.time_created = Date();
     this.tables = {};
     try {
-      const wasThere = fs.readFileSync(config.name + ".json", "utf-8");
+      let wasThere;
+      if (isNode) {
+        wasThere = fs.readFileSync(config.name + ".json", "utf-8");
+      } else {
+        wasThere = localStorage.getItem(config.name);
+      }
       if (wasThere) {
         return;
       }
     } catch (error) {}
-    console.log("JSONDB version " + JSONDBversion);
     if (!config.password) {
       throw new Error("JSONDB: error password is empty ");
     }
@@ -852,20 +924,37 @@ class JSONDB {
     function createKeys() {
       let keys = [];
       for (let i = 1500; i > 0; i -= 100) {
-        let rrr = i - Math.round((Math.random() * i) / 4);
+        let rrr = i - Math.round((Math.random() * i) / 50);
         keys.push(rrr);
       }
       keys = keys.join("-");
       console.log(`
-      Copy your JSONDB encription keys below and secure it!
+   \x1B[1m   \x1B[33m Welcome to JsonDB version ${JSONDBversion}, Your JSONDB Database is now encrypted!  \x1B[39m  \x1B[22m
+
+      \x1B[32m
+      \x1B[1m  Copy your JSONDB encryption keys below and secure it! \x1B[22m
+      \x1B[34m
           ...................................................................................
-                   ${keys}
+        \x1B[2m          ${keys} \x1B[22m
           ...................................................................................
+     
+
+ \x1B[3m \x1B[33m NB: Compulsory read \x1B[23m
+       \x1B[31m
+     - Lose of keys means lose of access to data
+     - Incorrect Keys are rejected by the JsonDB Algorithm
+     - Nothing Regarding your keys is Stored in the database file
+     - Encryption cannot be Reversed without your KEYS
+     - The Encryption Algorithm cannot BE BROKEN
+     - We bear no Damages Regarding Your use of this DataBase
+     - Refer to the Lincence before USE
+        
+     \x1B[39m
           `);
       return keys;
     }
     if (!config.encrypted) {
-      console.warn("JSONDB: data will not be encrypted ");
+      console.warn(`\x1B[34m JSONDB: data will not be encrypted! \x1B[39m`);
     } else {
       this.visuality = secure(createKeys()).encrypt({ key: "Candour" }).key;
     }
@@ -877,7 +966,12 @@ class JSONDB {
         );
       }
     }
-    fs.writeFile(config.name + ".json", JSON.stringify(this), cb);
+    if (isNode) {
+      fs.writeFile(config.name + ".json", JSON.stringify(this), cb);
+    } else {
+      let db = JSON.stringify(this);
+      localStorage.setItem(config.name, db);
+    }
   }
 
   /**
@@ -1022,7 +1116,11 @@ database.assemble([MessageSchema]);
         );
       }
     }
-    fs.writeFile(this.DB_NAME + ".json", JSON.stringify(this), cb);
+    if (isNode) {
+      fs.writeFile(this.DB_NAME + ".json", JSON.stringify(this), cb);
+    } else {
+      localStorage.setItem(this.DB_NAME, JSON.stringify(this));
+    }
   }
 }
 

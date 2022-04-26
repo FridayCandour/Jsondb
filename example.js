@@ -44,7 +44,7 @@ const StudentSchema = database.schema({
     },
     classNumber: {
       type: "number",
-      unique: true,
+      // unique: true,
     },
   },
   // adding relations definition
@@ -62,18 +62,16 @@ database.assemble([ExamRecordSchema, StudentSchema]);
 const details = {
   password: "password",
   username: "jsondb_username",
-  keys: "1138-1205-1080-1060-1066-878-806-693-666-491-446-384-250-156-96",
+  keys: "1488-1373-1292-1182-1085-996-885-796-690-598-494-395-296-196-99",
 };
-
 // a connection needs details for security
 const connection = await database.createJSONDBConnection(details);
-
-// creating and adding stuff into JSONDB tables
+// // creating and adding stuff into JSONDB tables
 const StudentTable = connection.getTable("Student");
 let Student = {
   Student_name: "friday candour",
   age: 121, // years old
-  class: "Senior javascript/typescript developer full stack and mobile",
+  class: "Senior javascript typescript developer full stack and mobile",
   handicap: false,
   classNumber: 1, // this unique remember
 };
